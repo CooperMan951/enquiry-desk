@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Enquiry Desk</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#16181D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Enquiry Desk">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16181D;
+    --ink-soft:#5B5F68;
+    --ink-faint:#9AA0AA;
+    --paper:#F4F5F7;
+    --surface:#FFFFFF;
+    --line:#E3E5E9;
+    --accent:#D9662B;
+    --accent-ink:#9A4A1D;
+    --accent-soft:#FBE7D8;
+    --success:#1F7A52;
+    --success-soft:#DFF3E8;
+    --warning:#92600A;
+    --warning-soft:#FCEFD8;
+    --danger:#B23A2E;
+    --danger-soft:#FBE6E3;
+    --radius:12px;
+    --radius-sm:8px;
+    --font-display:'Space Grotesk', 'Inter', sans-serif;
+    --font-body:'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:'IBM Plex Mono', 'SFMono-Regular', monospace;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .iris{ display:inline-block; flex-shrink:0; }
+  .iris path{ fill: var(--accent); }
+
+  /* ---------- Login screen ---------- */
+  #loginScreen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .login-card{
+    width:100%;
+    max-width:380px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:32px 28px 28px;
+    box-shadow:0 1px 2px rgba(20,20,25,0.04), 0 12px 32px -16px rgba(20,20,25,0.12);
+    animation: rise 0.35s ease both;
+  }
+  @keyframes rise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:translateY(0); } }
+  .brand-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:4px;
+  }
+  .brand-name{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:19px;
+    letter-spacing:-0.01em;
+  }
+  .brand-sub{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin:2px 0 26px;
+  }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block;
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    margin-bottom:6px;
+  }
+  select, input[type="text"], input[type="password"], input[type="tel"]{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    font-size:14px;
+    font-family:var(--font-body);
+    background:var(--surface);
+    color:var(--ink);
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  select:focus, input:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft);
+  }
+  .pin-input{
+    font-family:var(--font-mono);
+    letter-spacing:0.5em;
+    font-size:18px;
+    text-align:center;
+  }
+  .login-error{
+    font-size:13px;
+    color:var(--danger);
+    margin:-4px 0 14px;
+    min-height:16px;
+  }
+  .btn{
+    appearance:none;
+    border:none;
+    border-radius:var(--radius-sm);
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:14px;
+    padding:10px 16px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:background 0.15s ease, transform 0.05s ease;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{ background:var(--ink); color:#fff; width:100%; justify-content:center; padding:11px 16px; }
+  .btn-primary:hover{ background:#000; }
+  .btn-accent{ background:var(--accent); color:#fff; }
+  .btn-accent:hover{ background:var(--accent-ink); }
+  .btn-secondary{ background:var(--surface); color:var(--ink); border:1px solid var(--line); }
+  .btn-secondary:hover{ background:var(--paper); }
+  .btn-ghost{ background:transparent; color:var(--ink-soft); border:1px solid var(--line); padding:7px 12px; font-size:13px; }
+  .btn-ghost:hover{ background:var(--surface); color:var(--ink); }
+  .btn-icon{ padding:8px 10px; }
+
+  /* ---------- App shell ---------- */
+  #appShell{ display:none; }
+  .topbar{
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .topbar-left{ display:flex; align-items:center; gap:10px; }
+  .topbar-right{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ink-soft); }
+  .session-name{ font-weight:600; color:var(--ink); }
+
+  .container{
+    max-width:760px;
+    margin:0 auto;
+    padding:24px 16px 60px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .card-title{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:15px;
+    margin:0 0 4px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .hint{ font-size:12.5px; color:var(--ink-faint); margin:4px 0 14px; line-height:1.5; }
+  .info-banner{
+    background:var(--accent-soft);
+    color:var(--accent-ink);
+    border-radius:var(--radius-sm);
+    padding:10px 14px;
+    font-size:13px;
+    line-height:1.5;
+  }
+  details.card summary{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:15px;
+    cursor:pointer;
+    list-style:none;
+  }
+  details.card summary::-webkit-details-marker{ display:none; }
+  details.card summary::before{ content:"▸ "; color:var(--ink-faint); }
+  details.card[open] summary::before{ content:"▾ "; }
+
+  .field-label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    display:block;
+    margin-bottom:5px;
+  }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .full{ grid-column:1/-1; }
+  .checkbox-row{ display:flex; align-items:center; gap:8px; margin-top:2px; }
+  .checkbox-row input{ width:16px; height:16px; accent-color:var(--accent); }
+  .actions{ display:flex; gap:8px; margin-top:16px; }
+
+  #ocrStatus{ font-size:13px; color:var(--ink-soft); margin:10px 0 0; display:none; }
+  #preview{ max-width:160px; border-radius:var(--radius-sm); margin-top:10px; display:none; border:1px solid var(--line); }
+  #rawTextOutput{
+    white-space:pre-wrap; font-family:var(--font-mono); font-size:11.5px;
+    background:var(--paper); padding:10px; border-radius:var(--radius-sm);
+    margin-top:6px; max-height:200px; overflow:auto; border:1px solid var(--line);
+  }
+  #rawTextWrap summary{ font-size:12px; color:var(--ink-faint); cursor:pointer; }
+
+  .list-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px; flex-wrap:wrap; }
+  .list-actions{ display:flex; gap:8px; }
+  .empty-state{ color:var(--ink-faint); margin:0; font-size:14px; padding:8px 0; }
+
+  .entry-row{
+    border:1px solid var(--line);
+    border-radius:var(--radius-sm);
+    padding:10px 12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+  }
+  .entry-row + .entry-row{ margin-top:8px; }
+  .entry-left{ display:flex; align-items:flex-start; gap:10px; }
+  .entry-left input[type="checkbox"]{ width:16px; height:16px; margin-top:3px; accent-color:var(--success); }
+  .entry-name{ margin:0; font-weight:600; font-size:14px; }
+  .entry-contact{ margin:2px 0 0; color:var(--ink-soft); font-size:13px; }
+  .entry-product{ margin:3px 0 0; font-size:13px; }
+  .entry-meta{ margin:5px 0 0; color:var(--ink-faint); font-size:11.5px; font-family:var(--font-mono); }
+  .entry-right{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+
+  .status-dot{
+    width:7px; height:7px; border-radius:50%; display:inline-block;
+  }
+  .badge{
+    font-family:var(--font-mono);
+    font-size:11px;
+    font-weight:500;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    padding:3px 9px 3px 7px;
+    border-radius:20px;
+    white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .badge-assisted{ background:var(--success-soft); color:var(--success); }
+  .badge-assisted .status-dot{ background:var(--success); }
+  .badge-pending{ background:var(--warning-soft); color:var(--warning); }
+  .badge-pending .status-dot{ background:transparent; border:1.5px solid var(--warning); width:5px; height:5px; }
+
+  .del-btn{
+    background:transparent; color:var(--danger); border:1px solid var(--line);
+    padding:5px 9px; border-radius:var(--radius-sm); cursor:pointer; font-size:13px;
+  }
+  .del-btn:hover{ background:var(--danger-soft); border-color:var(--danger-soft); }
+
+  #keyStatus{ font-size:12px; margin:8px 0 0; }
+  .footnote{ font-size:11.5px; color:var(--ink-faint); text-align:center; line-height:1.6; }
+
+  @media (max-width: 480px){
+    .grid{ grid-template-columns:1fr; }
+    .topbar{ padding:12px 14px; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="brand-row">
+      <svg class="iris" width="28" height="28" viewBox="0 0 32 32">
+        <g>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(0 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(60 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(120 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(180 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(240 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(300 16 16)"/>
+        </g>
+      </svg>
+      <span class="brand-name">Enquiry Desk</span>
+    </div>
+    <p class="brand-sub">Sign in to log and track client enquiries.</p>
+
+    <div class="field">
+      <label for="loginName">Your name</label>
+      <select id="loginName">
+        <option value="">Select staff member...</option>
+        <option value="__add__">+ Add new name</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="loginPin">Team PIN</label>
+      <input type="password" id="loginPin" class="pin-input" inputmode="numeric" maxlength="8" placeholder="••••" />
+    </div>
+
+    <p class="login-error" id="loginError"></p>
+
+    <button type="button" class="btn btn-primary" id="loginBtn" disabled>Loading…</button>
+    <p class="hint" style="text-align:center; margin-top:14px; margin-bottom:0;">First time? Default team PIN is <strong>0020</strong> — change it after signing in under Team settings.</p>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div id="appShell">
+  <div class="topbar">
+    <div class="topbar-left">
+      <svg class="iris" width="22" height="22" viewBox="0 0 32 32">
+        <g>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(0 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(60 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(120 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(180 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(240 16 16)"/>
+          <path d="M16,16 L16,4 L23,9 Z" transform="rotate(300 16 16)"/>
+        </g>
+      </svg>
+      <span class="brand-name" style="font-size:16px;">Enquiry Desk</span>
+    </div>
+    <div class="topbar-right">
+      <span>Signed in as <span class="session-name" id="sessionNameLabel">—</span></span>
+      <button type="button" class="btn btn-ghost" id="logoutBtn">Log out</button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="info-banner">
+      Data is stored only in this browser (localStorage) on this computer — it does not sync to other devices automatically.
+    </div>
+
+    <div class="info-banner" id="followupBanner" style="display:none; background:var(--warning-soft); color:var(--warning);"></div>
+
+    <details class="card" id="teamSettingsCard">
+      <summary>Team settings (PIN &amp; OCR key)</summary>
+      <div style="margin-top:14px;">
+        <p class="field-label">Team PIN</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px;">
+          <input type="password" id="newPinInput" inputmode="numeric" maxlength="8" placeholder="New PIN" style="max-width:160px;" />
+          <button type="button" class="btn btn-secondary" id="savePinBtn">Update PIN</button>
+        </div>
+
+        <p class="field-label">Google Cloud Vision API key</p>
+        <p class="hint" style="margin-top:0;">Stored only in this browser. Get a free key at console.cloud.google.com → enable "Cloud Vision API" → Credentials → Create API key.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <input type="password" id="apiKeyInput" style="flex:1; min-width:220px;" placeholder="Paste your Google Cloud Vision API key" />
+          <button type="button" class="btn btn-secondary" id="saveKeyBtn">Save key</button>
+        </div>
+        <p id="keyStatus"></p>
+      </div>
+    </details>
+
+    <div class="card">
+      <p class="card-title">Scan a note</p>
+      <p class="hint">Reads "Name & Surname", "Phone/Cell Number", "Email" and treats whatever is written under "NOTES" as the product wanted. Falls back to top-half/bottom-half guessing if no labels are found.</p>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div>
+          <label class="field-label" for="fileInput">Choose a photo from this device</label>
+          <input type="file" id="fileInput" accept="image/*" />
+        </div>
+        <div>
+          <label class="field-label" for="cameraInput">Or take a photo now (mobile)</label>
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" />
+        </div>
+      </div>
+      <p id="ocrStatus"></p>
+      <img id="preview" alt="Preview of selected note" />
+      <details id="rawTextWrap" style="margin-top:10px; display:none;">
+        <summary>Show raw text Vision detected (for troubleshooting)</summary>
+        <pre id="rawTextOutput"></pre>
+      </details>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Enquiry details</p>
+      <div id="editingBanner" style="display:none; background:var(--accent-soft); color:var(--accent-ink); border-radius:var(--radius-sm); padding:8px 12px; font-size:13px; margin-bottom:12px;">
+        Editing an existing enquiry — saving will update it instead of creating a new one.
+      </div>
+      <div class="grid">
+        <div class="full">
+          <label class="field-label">Captured by</label>
+          <select id="f_capturedby">
+            <option value="">Select staff member...</option>
+            <option value="__add__">+ Add new name</option>
+          </select>
+        </div>
+        <div class="full">
+          <label class="field-label">Name</label>
+          <input type="text" id="f_name" placeholder="Customer name" />
+        </div>
+        <div>
+          <label class="field-label">Contact number</label>
+          <input type="text" id="f_phone" placeholder="082 123 4567" />
+        </div>
+        <div>
+          <label class="field-label">Email</label>
+          <input type="text" id="f_email" placeholder="name@email.com" />
+        </div>
+        <div class="full">
+          <label class="field-label">Product wanted</label>
+          <div id="productRows" style="display:flex; flex-direction:column; gap:8px;"></div>
+          <button type="button" class="btn btn-ghost" id="addProductBtn" style="margin-top:8px;">+ Add another product</button>
+        </div>
+        <div class="full">
+          <label class="field-label">Notes (optional)</label>
+          <input type="text" id="f_notes" placeholder="Anything else" />
+        </div>
+        <div>
+          <label class="field-label">Follow up on</label>
+          <input type="date" id="f_followup" />
+        </div>
+        <div class="full checkbox-row">
+          <input type="checkbox" id="f_assisted" />
+          <label for="f_assisted" style="font-size:13px;">Client has been assisted</label>
+        </div>
+        <div class="full checkbox-row">
+          <input type="checkbox" id="f_ordered" />
+          <label for="f_ordered" style="font-size:13px;">Ordered</label>
+        </div>
+        <div class="full checkbox-row">
+          <input type="checkbox" id="f_notified" />
+          <label for="f_notified" style="font-size:13px;">Client notified</label>
+        </div>
+        <div class="full checkbox-row">
+          <input type="checkbox" id="f_collected" />
+          <label for="f_collected" style="font-size:13px;">Client collected</label>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-accent" id="saveBtn">Save enquiry</button>
+        <button type="button" class="btn btn-secondary" id="clearBtn">Clear form</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="list-header">
+        <p class="card-title" style="margin:0;">Saved enquiries (<span id="countLabel">0</span>)</p>
+        <div class="list-actions">
+          <select id="listFilter" style="width:auto; font-size:13px; padding:7px 10px;">
+            <option value="mine">My enquiries</option>
+            <option value="all">All enquiries</option>
+          </select>
+          <button type="button" class="btn btn-secondary" id="exportBtn">Export CSV</button>
+        </div>
+      </div>
+      <div id="listWrap"></div>
+    </div>
+
+    <p class="footnote">
+      localStorage is per-browser, per-device. If multiple staff/computers need to share one live list,<br/>
+      this version would need a small backend (e.g. a free Firebase/Supabase database) added — ask Claude if you'd like that built next.
+    </p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const SUPABASE_URL = 'https://ihgbbwcrqjnjmxeatyrm.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImloZ2Jid2NycWpuam14ZWF0eXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MjU2ODksImV4cCI6MjA5ODAwMTY4OX0.urQ_kE4oYyz64eI6lKj_4wGrYyQVjM17DkQcnrgFPOg';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const APIKEY_KEY = 'vision_api_key_local_v1';
+  const SESSION_KEY = 'session_local_v1';
+  const DEFAULT_PIN = '0020';
+  const DEFAULT_STAFF = ['Arno', 'Brendan', 'Gavin', 'Marcel', 'Phiwe', 'Faizel', 'Japie'];
+
+  // entries/staff/teamPin are now a local cache of what's in the shared Supabase
+  // database — loaded on startup and refreshed whenever any device makes a change.
+  let entries = [];
+  let staff = [];
+  let teamPin = DEFAULT_PIN;
+  let visionApiKey = localStorage.getItem(APIKEY_KEY) || '';
+  let currentUser = '';
+  let editingIndex = -1;
+
+  const $ = id => document.getElementById(id);
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function getPin(){ return teamPin; }
+
+  // ---------------- Supabase data sync ----------------
+  function dbRowToEntry(row){
+    const created = row.created_at ? new Date(row.created_at) : new Date();
+    return {
+      _id: row.id,
+      name: row.name || '',
+      phone: row.phone || '',
+      email: row.email || '',
+      product: Array.isArray(row.product) ? row.product : (row.product ? [row.product] : []),
+      notes: row.notes || '',
+      assisted: !!row.assisted,
+      ordered: !!row.ordered,
+      clientNotified: !!row.client_notified,
+      clientCollected: !!row.client_collected,
+      capturedBy: row.captured_by || '',
+      followUp: row.follow_up || '',
+      photo: row.photo || '',
+      date: created.toLocaleDateString() + ' ' + created.toLocaleTimeString()
+    };
+  }
+
+  function entryToDbRow(e){
+    return {
+      name: e.name, phone: e.phone, email: e.email, product: e.product, notes: e.notes,
+      assisted: e.assisted, ordered: e.ordered,
+      client_notified: e.clientNotified, client_collected: e.clientCollected,
+      captured_by: e.capturedBy, follow_up: e.followUp || null, photo: e.photo || null
+    };
+  }
+
+  async function loadEntries(){
+    const { data, error } = await sb.from('enquiries').select('*').order('created_at', { ascending: true });
+    if(error){ console.error('Load enquiries failed:', error); return; }
+    entries = (data || []).map(dbRowToEntry);
+  }
+
+  async function loadSettings(){
+    const { data, error } = await sb.from('app_settings').select('*');
+    if(error){ console.error('Load settings failed:', error); return; }
+    const map = {};
+    (data || []).forEach(row => { map[row.key] = row.value; });
+    teamPin = map.team_pin || DEFAULT_PIN;
+    staff = Array.isArray(map.staff_list) && map.staff_list.length ? map.staff_list : DEFAULT_STAFF.slice();
+  }
+
+  async function refreshAll(){
+    await Promise.all([loadSettings(), loadEntries()]);
+    populateStaffSelect(loginName, currentUser);
+    populateStaffSelect(fCapturedBy, currentUser);
+    renderList();
+    checkFollowups();
+  }
+
+  let connectionError = false;
+  function showConnectionError(msg){
+    connectionError = true;
+    const el = $('loginError');
+    if(el) el.textContent = msg;
+  }
+
+  // ---------------- Login / session ----------------
+  const loginScreen = $('loginScreen');
+  const appShell = $('appShell');
+  const loginName = $('loginName');
+  const loginPin = $('loginPin');
+  const loginError = $('loginError');
+
+  function populateStaffSelect(selectEl, currentValue){
+    selectEl.innerHTML = '<option value="">Select staff member...</option>' +
+      staff.map(s => '<option value="'+escapeHtml(s)+'">'+escapeHtml(s)+'</option>').join('') +
+      '<option value="__add__">+ Add new name</option>';
+    if(currentValue && staff.includes(currentValue)) selectEl.value = currentValue;
+  }
+
+  async function handleAddStaffName(selectEl){
+    const name = prompt('Enter new staff name:');
+    selectEl.value = '';
+    if(name && name.trim()){
+      const trimmed = name.trim();
+      if(!staff.includes(trimmed)){
+        staff.push(trimmed);
+        const { error } = await sb.from('app_settings').update({ value: staff }).eq('key', 'staff_list');
+        if(error) console.error('Could not save new staff name:', error);
+      }
+      populateStaffSelect(loginName, trimmed);
+      populateStaffSelect($('f_capturedby'), trimmed);
+      selectEl.value = trimmed;
+    }
+  }
+
+  loginName.addEventListener('change', () => {
+    if(loginName.value === '__add__') handleAddStaffName(loginName);
+  });
+
+  const ADMIN_USERS = ['Arno'];
+
+  function showApp(name){
+    currentUser = name;
+    loginScreen.style.display = 'none';
+    appShell.style.display = 'block';
+    $('sessionNameLabel').textContent = name;
+    populateStaffSelect($('f_capturedby'), name);
+    $('teamSettingsCard').style.display = ADMIN_USERS.includes(name) ? '' : 'none';
+    renderList();
+    checkFollowups();
+  }
+
+  $('loginBtn').addEventListener('click', () => {
+    const name = loginName.value;
+    const pin = loginPin.value.trim();
+    if(!name || name === '__add__'){
+      loginError.textContent = 'Please select your name.';
+      return;
+    }
+    if(pin !== getPin()){
+      loginError.textContent = 'Incorrect PIN — please try again.';
+      loginPin.value = '';
+      loginPin.focus();
+      return;
+    }
+    loginError.textContent = '';
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ name, ts: Date.now() }));
+    showApp(name);
+  });
+  loginPin.addEventListener('keydown', (e) => { if(e.key === 'Enter') $('loginBtn').click(); });
+
+  $('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem(SESSION_KEY);
+    loginPin.value = '';
+    loginError.textContent = '';
+    appShell.style.display = 'none';
+    loginScreen.style.display = 'flex';
+  });
+
+  // ---------------- Team settings ----------------
+  $('savePinBtn').addEventListener('click', async () => {
+    const val = $('newPinInput').value.trim();
+    if(!val){ return; }
+    const { error } = await sb.from('app_settings').update({ value: val }).eq('key', 'team_pin');
+    if(error){
+      $('newPinInput').placeholder = 'Could not update — try again';
+      console.error(error);
+      return;
+    }
+    teamPin = val;
+    $('newPinInput').value = '';
+    $('newPinInput').placeholder = 'PIN updated ✓';
+  });
+
+  const apiKeyInput = $('apiKeyInput'), keyStatus = $('keyStatus');
+  function refreshKeyStatus(){
+    if(visionApiKey){
+      apiKeyInput.value = visionApiKey;
+      keyStatus.textContent = 'Key saved in this browser.';
+      keyStatus.style.color = 'var(--success)';
+    } else {
+      keyStatus.textContent = 'No key saved yet — photo scanning will not work until one is added.';
+      keyStatus.style.color = 'var(--ink-faint)';
+    }
+  }
+  $('saveKeyBtn').addEventListener('click', () => {
+    const val = apiKeyInput.value.trim();
+    if(!val){
+      keyStatus.textContent = 'Please paste a key first.';
+      keyStatus.style.color = 'var(--warning)';
+      return;
+    }
+    visionApiKey = val;
+    localStorage.setItem(APIKEY_KEY, val);
+    refreshKeyStatus();
+  });
+
+  // ---------------- Captured-by dropdown (in form) ----------------
+  const fName=$('f_name'), fPhone=$('f_phone'), fEmail=$('f_email'),
+        fNotes=$('f_notes'), fAssisted=$('f_assisted'), fCapturedBy=$('f_capturedby'), fFollowup=$('f_followup'),
+        fOrdered=$('f_ordered'), fNotified=$('f_notified'), fCollected=$('f_collected');
+
+  // ---------------- Product rows (supports multiple items per enquiry) ----------------
+  function addProductRow(value){
+    const wrap = $('productRows');
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.gap = '6px';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'product-input';
+    input.placeholder = 'Product / item / size';
+    input.value = value || '';
+    row.appendChild(input);
+    if(wrap.children.length > 0){
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'btn btn-ghost';
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', () => row.remove());
+      row.appendChild(removeBtn);
+    }
+    wrap.appendChild(row);
+  }
+  function getProductValues(){
+    return Array.from(document.querySelectorAll('.product-input'))
+      .map(i => i.value.trim())
+      .filter(Boolean);
+  }
+  function setProductValues(values){
+    $('productRows').innerHTML = '';
+    const list = (values && values.length) ? values : [''];
+    list.forEach(v => addProductRow(v));
+  }
+  function productDisplay(product){
+    // Supports both the new array format and old single-string entries from before this feature.
+    if(Array.isArray(product)) return product.filter(Boolean).join(' · ');
+    return product || '';
+  }
+  $('addProductBtn').addEventListener('click', () => addProductRow(''));
+  setProductValues(['']);
+
+  fCapturedBy.addEventListener('change', () => {
+    if(fCapturedBy.value === '__add__') handleAddStaffName(fCapturedBy);
+  });
+
+  // ---------------- List rendering ----------------
+  // ---------------- Follow-up reminders ----------------
+  function todayStr(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function buildFollowupBadge(followUpDate){
+    const today = todayStr();
+    let label, style;
+    if(followUpDate < today){
+      label = 'Overdue follow-up: ' + followUpDate;
+      style = 'background:var(--danger-soft); color:var(--danger);';
+    } else if(followUpDate === today){
+      label = 'Follow up today';
+      style = 'background:var(--warning-soft); color:var(--warning);';
+    } else {
+      label = 'Follow up: ' + followUpDate;
+      style = 'background:var(--paper); color:var(--ink-soft); border:1px solid var(--line);';
+    }
+    return '<span class="badge" style="' + style + '">' + escapeHtml(label) + '</span>';
+  }
+
+  function checkFollowups(){
+    const banner = $('followupBanner');
+    if(!currentUser){ banner.style.display = 'none'; return; }
+    const today = todayStr();
+    const due = entries.filter(e =>
+      (e.capturedBy || '') === currentUser &&
+      e.followUp && e.followUp <= today &&
+      !e.assisted
+    );
+    if(due.length === 0){
+      banner.style.display = 'none';
+      return;
+    }
+    banner.style.display = 'block';
+    banner.textContent = due.length === 1
+      ? 'You have 1 follow-up due: ' + (due[0].name || 'an enquiry') + ' (' + due[0].followUp + ').'
+      : 'You have ' + due.length + ' follow-ups due, including ' + (due[0].name || 'an enquiry') + '.';
+
+    // Best-effort real notification — only fires while the app is open (no server,
+    // so true background push reminders aren't possible from a local-only app).
+    if('Notification' in window){
+      if(Notification.permission === 'granted'){
+        fireFollowupNotification(due);
+      } else if(Notification.permission !== 'denied'){
+        Notification.requestPermission().then(perm => {
+          if(perm === 'granted') fireFollowupNotification(due);
+        });
+      }
+    }
+  }
+
+  let notifiedToday = '';
+  function fireFollowupNotification(due){
+    const key = currentUser + '|' + todayStr();
+    if(notifiedToday === key) return; // avoid repeat popups within the same session/day
+    notifiedToday = key;
+    try{
+      new Notification('Enquiry Desk — follow-up due', {
+        body: due.length === 1
+          ? (due[0].name || 'A client') + ' needs a follow-up today.'
+          : due.length + ' enquiries need a follow-up.',
+        icon: 'icon-192.png'
+      });
+    }catch(e){ /* ignore — notification not critical to core function */ }
+  }
+
+  function renderList(){
+    const filterMode = $('listFilter') ? $('listFilter').value : 'mine';
+    // Pair each entry with its real index in the `entries` array before filtering,
+    // so delete/toggle actions still target the correct underlying entry.
+    const indexed = entries.map((e, i) => ({ e, i }));
+    const visible = filterMode === 'mine'
+      ? indexed.filter(x => (x.e.capturedBy || '') === currentUser)
+      : indexed;
+
+    $('countLabel').textContent = visible.length;
+    const wrap = $('listWrap');
+    if(visible.length === 0){
+      wrap.innerHTML = '<p class="empty-state">' +
+        (filterMode === 'mine' && entries.length > 0
+          ? 'No enquiries captured by you yet. Switch to "All enquiries" to see the full team list.'
+          : 'No enquiries saved yet.') +
+        '</p>';
+      return;
+    }
+    let html = '';
+    const STATUS_FIELDS = [
+      { key: 'assisted', label: 'Assisted' },
+      { key: 'ordered', label: 'Ordered' },
+      { key: 'clientNotified', label: 'Client notified' },
+      { key: 'clientCollected', label: 'Client collected' }
+    ];
+    visible.slice().reverse().forEach(({ e, i: realIdx }) => {
+      const followupBadge = e.followUp ? buildFollowupBadge(e.followUp) : '';
+      const statusChecklist = STATUS_FIELDS.map(f =>
+        '<label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); white-space:nowrap;">' +
+        '<input type="checkbox" data-status="'+realIdx+'" data-key="'+f.key+'" '+(e[f.key]?'checked':'')+' style="width:14px; height:14px; accent-color:var(--success);" />' +
+        f.label + '</label>'
+      ).join('');
+      const thumb = e.photo
+        ? '<img src="'+e.photo+'" data-photo-view="'+realIdx+'" alt="Scanned note thumbnail" style="width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--line); cursor:pointer; flex-shrink:0;" />'
+        : '';
+      html += '<div class="entry-row">' +
+        '<div class="entry-left">' +
+        thumb +
+        '<div>' +
+        '<p class="entry-name">' + escapeHtml(e.name || '(no name)') + '</p>' +
+        '<p class="entry-contact">' + escapeHtml(e.phone||'') + (e.phone && e.email ? ' · ' : '') + escapeHtml(e.email||'') + '</p>' +
+        '<p class="entry-product">' + escapeHtml(productDisplay(e.product)) + '</p>' +
+        '<p class="entry-meta">' + escapeHtml(e.date||'') + (e.capturedBy ? ' · ' + escapeHtml(e.capturedBy) : '') + '</p>' +
+        (followupBadge ? '<p style="margin:6px 0 0;">' + followupBadge + '</p>' : '') +
+        '</div></div>' +
+        '<div class="entry-right" style="align-items:flex-end;">' +
+        '<div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">' + statusChecklist + '</div>' +
+        '<div style="display:flex; gap:6px; margin-top:4px;">' +
+        '<button type="button" class="btn btn-ghost" data-edit="'+realIdx+'" style="padding:5px 9px; font-size:13px;">Edit</button>' +
+        '<button type="button" class="del-btn" data-del="'+realIdx+'">Delete</button>' +
+        '</div></div></div>';
+    });
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const i = parseInt(btn.getAttribute('data-del'));
+        const id = entries[i]._id;
+        btn.disabled = true;
+        const { error } = await sb.from('enquiries').delete().eq('id', id);
+        if(error){ console.error('Delete failed:', error); btn.disabled = false; return; }
+        await loadEntries();
+        renderList();
+      });
+    });
+    wrap.querySelectorAll('[data-status]').forEach(cb => {
+      cb.addEventListener('change', async () => {
+        const i = parseInt(cb.getAttribute('data-status'));
+        const key = cb.getAttribute('data-key');
+        const id = entries[i]._id;
+        const dbCol = { assisted:'assisted', ordered:'ordered', clientNotified:'client_notified', clientCollected:'client_collected' }[key];
+        entries[i][key] = cb.checked; // optimistic update
+        const { error } = await sb.from('enquiries').update({ [dbCol]: cb.checked }).eq('id', id);
+        if(error){ console.error('Status update failed:', error); }
+        renderList();
+        checkFollowups();
+      });
+    });
+    wrap.querySelectorAll('[data-edit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.getAttribute('data-edit'));
+        loadEntryIntoForm(i);
+      });
+    });
+    wrap.querySelectorAll('[data-photo-view]').forEach(img => {
+      img.addEventListener('click', () => {
+        const i = parseInt(img.getAttribute('data-photo-view'));
+        openPhotoViewer(entries[i].photo);
+      });
+    });
+  }
+
+  function loadEntryIntoForm(i){
+    const e = entries[i];
+    editingIndex = i;
+    fName.value = e.name || '';
+    fPhone.value = e.phone || '';
+    fEmail.value = e.email || '';
+    setProductValues(Array.isArray(e.product) ? e.product : (e.product ? [e.product] : ['']));
+    fNotes.value = e.notes || '';
+    fAssisted.checked = !!e.assisted;
+    fOrdered.checked = !!e.ordered;
+    fNotified.checked = !!e.clientNotified;
+    fCollected.checked = !!e.clientCollected;
+    fFollowup.value = e.followUp || '';
+    if(e.capturedBy) populateStaffSelect(fCapturedBy, e.capturedBy);
+    pendingPhotoThumb = '';
+    if(e.photo){
+      $('preview').src = e.photo;
+      $('preview').style.display = 'block';
+    }
+    $('saveBtn').textContent = 'Update enquiry';
+    $('editingBanner').style.display = 'block';
+    $('editingBanner').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function openPhotoViewer(src){
+    if(!src) return;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:9999; padding:24px; cursor:zoom-out;';
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,0.4);';
+    overlay.appendChild(img);
+    overlay.addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
+  }
+
+  function persist(){ /* no-op — data now lives in Supabase, kept for compatibility */ }
+
+  // ---------------- Save / clear ----------------
+  $('saveBtn').addEventListener('click', async () => {
+    const products = getProductValues();
+    if(!fName.value.trim() && !fPhone.value.trim() && !fEmail.value.trim() && products.length === 0){
+      return;
+    }
+    const saveBtn = $('saveBtn');
+    const originalLabel = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    const data = {
+      name: fName.value.trim(),
+      phone: fPhone.value.trim(),
+      email: fEmail.value.trim(),
+      product: products,
+      notes: fNotes.value.trim(),
+      assisted: fAssisted.checked,
+      ordered: fOrdered.checked,
+      clientNotified: fNotified.checked,
+      clientCollected: fCollected.checked,
+      capturedBy: (fCapturedBy.value && fCapturedBy.value !== '__add__') ? fCapturedBy.value : '',
+      followUp: fFollowup.value || ''
+    };
+    if(pendingPhotoThumb) data.photo = pendingPhotoThumb;
+
+    let error;
+    if(editingIndex >= 0){
+      const id = entries[editingIndex]._id;
+      if(!pendingPhotoThumb) data.photo = entries[editingIndex].photo || '';
+      ({ error } = await sb.from('enquiries').update(entryToDbRow(data)).eq('id', id));
+      editingIndex = -1;
+    } else {
+      data.photo = pendingPhotoThumb || '';
+      ({ error } = await sb.from('enquiries').insert([entryToDbRow(data)]));
+    }
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = originalLabel;
+
+    if(error){
+      console.error('Save failed:', error);
+      alert('Could not save — check your internet connection and try again.');
+      return;
+    }
+    await loadEntries();
+    renderList();
+    checkFollowups();
+    clearForm();
+  });
+
+  function clearForm(){
+    fName.value=''; fPhone.value=''; fEmail.value=''; fNotes.value='';
+    setProductValues(['']);
+    fAssisted.checked = false;
+    fOrdered.checked = false;
+    fNotified.checked = false;
+    fCollected.checked = false;
+    fFollowup.value = '';
+    pendingPhotoThumb = '';
+    editingIndex = -1;
+    $('saveBtn').textContent = 'Save enquiry';
+    $('editingBanner').style.display = 'none';
+    $('preview').style.display = 'none';
+    $('ocrStatus').style.display = 'none';
+    $('rawTextWrap').style.display = 'none';
+    $('fileInput').value = '';
+    $('cameraInput').value = '';
+  }
+  $('clearBtn').addEventListener('click', clearForm);
+
+  // ---------------- CSV export ----------------
+  $('exportBtn').addEventListener('click', () => {
+    const filterMode = $('listFilter') ? $('listFilter').value : 'mine';
+    const toExport = filterMode === 'mine'
+      ? entries.filter(e => (e.capturedBy || '') === currentUser)
+      : entries;
+    if(toExport.length === 0) return;
+    const headers = ['Name','Contact number','Email','Product','Notes','Assisted','Ordered','Client notified','Client collected','Captured by','Follow up on','Date & time'];
+    const rows = toExport.map(e => [e.name, e.phone, e.email, productDisplay(e.product), e.notes, (e.assisted ? 'Yes' : 'No'), (e.ordered ? 'Yes' : 'No'), (e.clientNotified ? 'Yes' : 'No'), (e.clientCollected ? 'Yes' : 'No'), e.capturedBy, e.followUp||'', e.date]);
+    let csv = headers.join(',') + '\n';
+    rows.forEach(r => {
+      csv += r.map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(',') + '\n';
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'enquiries.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+  $('listFilter').addEventListener('change', renderList);
+
+  // ---------------- File handling / OCR ----------------
+  $('cameraInput').addEventListener('change', handleFile);
+  $('fileInput').addEventListener('change', handleFile);
+
+  let pendingPhotoThumb = '';
+
+  function makeThumbnail(dataUrl, maxDim, callback){
+    const img = new Image();
+    img.onload = function(){
+      let w = img.width, h = img.height;
+      if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+      else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.onerror = function(){ callback(''); };
+    img.src = dataUrl;
+  }
+
+  function handleFile(e){
+    const status = $('ocrStatus');
+    status.style.display = 'block';
+    status.textContent = 'File selected, loading preview...';
+    const file = e.target.files && e.target.files[0];
+    if(!file){
+      status.textContent = 'No file detected — please try selecting the image again.';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(ev){
+      $('preview').src = ev.target.result;
+      $('preview').style.display = 'block';
+      makeThumbnail(ev.target.result, 300, (thumb) => { pendingPhotoThumb = thumb; });
+      runOCR(ev.target.result);
+    };
+    reader.onerror = function(){
+      status.textContent = 'Could not read the selected file — please try a different image.';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function runOCR(dataUrl){
+    const status = $('ocrStatus');
+    status.style.display = 'block';
+
+    if(!visionApiKey){
+      status.textContent = 'No API key set yet — open "Team settings" above to add one, or enter details manually for now.';
+      return;
+    }
+
+    status.textContent = 'Reading the note...';
+    try{
+      const base64 = dataUrl.split(',')[1];
+      const response = await fetch('https://vision.googleapis.com/v1/images:annotate?key=' + encodeURIComponent(visionApiKey), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [{
+            image: { content: base64 },
+            features: [{ type: 'DOCUMENT_TEXT_DETECTION' }]
+          }]
+        })
+      });
+      const data = await response.json();
+
+      if(data.error){
+        status.textContent = 'Vision API error: ' + data.error.message;
+        return;
+      }
+      const resp = data.responses && data.responses[0];
+      if(resp && resp.error){
+        status.textContent = 'Vision API error: ' + resp.error.message;
+        return;
+      }
+      const text = (resp && resp.fullTextAnnotation && resp.fullTextAnnotation.text) || '';
+      if(!text.trim()){
+        status.textContent = 'No text detected — please check the photo is clear and try again, or enter details manually.';
+        return;
+      }
+      status.textContent = 'Done — check the fields below and edit anything that is wrong.';
+      $('rawTextWrap').style.display = 'block';
+      $('rawTextOutput').textContent = text;
+      populateFromText(text);
+    }catch(err){
+      status.textContent = 'Could not reach the OCR service: ' + (err && err.message ? err.message : String(err)) + ' — please enter details manually.';
+      console.error('OCR error:', err);
+    }
+  }
+
+  function isDividerLine(line){
+    if(!line) return false;
+    const stripped = line.replace(/\s+/g,'');
+    if(stripped.length < 3) return false;
+    return /^[-_=*~]+$/.test(stripped);
+  }
+
+  const LABEL_TOKENS = [
+    { re: /business\s*name/i, field: null },
+    { re: /name\s*&\s*surname/i, field: 'name' },
+    { re: /vat\s*#?/i, field: null },
+    { re: /order\s*#?/i, field: null },
+    { re: /address/i, field: null },
+    { re: /phone\s*number/i, field: 'phone' },
+    { re: /cell\s*number/i, field: 'phone' },
+    { re: /e-?mail/i, field: 'email' },
+    { re: /del\s*method/i, field: null },
+    { re: /collection/i, field: null },
+    { re: /delivery\s*\/?\s*courier/i, field: null },
+    { re: /notes/i, field: 'product' },
+    { re: /\b(client|customer)\s*[:\-]/i, field: 'name' },
+    { re: /\b(tel|telephone|contact|mobile|whatsapp)\s*[:\-]/i, field: 'phone' },
+    { re: /\b(product|item|wants?|model|size)\s*[:\-]/i, field: 'product' }
+  ];
+
+  function extractFieldsByPosition(text){
+    const matches = [];
+    LABEL_TOKENS.forEach(tok => {
+      const re = new RegExp(tok.re.source, 'gi');
+      let m;
+      while((m = re.exec(text)) !== null){
+        matches.push({ start: m.index, end: m.index + m[0].length, field: tok.field });
+      }
+    });
+    matches.sort((a,b) => a.start - b.start);
+
+    const deduped = [];
+    matches.forEach(m => {
+      if(deduped.length && m.start < deduped[deduped.length-1].end) return;
+      deduped.push(m);
+    });
+
+    const found = { name:'', phone:'', email:'', product:'' };
+    for(let i = 0; i < deduped.length; i++){
+      const cur = deduped[i];
+      if(!cur.field) continue;
+      const next = deduped[i+1];
+      let value = text.substring(cur.end, next ? next.start : text.length);
+      value = value.replace(/^[\s:\-]+/, '').replace(/\s+/g, ' ').trim();
+      if(value && !found[cur.field]) found[cur.field] = value;
+    }
+
+    const notesIdx = deduped.findIndex(m => m.field === 'product');
+    if(notesIdx !== -1){
+      let endIdx = text.length;
+      for(let j = notesIdx + 1; j < deduped.length; j++){
+        if(['name','phone','email'].includes(deduped[j].field)){
+          endIdx = deduped[j].start;
+          break;
+        }
+      }
+      let span = text.substring(deduped[notesIdx].end, endIdx);
+      LABEL_TOKENS.forEach(tok => {
+        const re = new RegExp(tok.re.source, 'gi');
+        span = span.replace(re, ' ');
+      });
+      span = span.replace(/^[\s:\-]+/, '').replace(/\s+/g, ' ').trim();
+      if(span) found.product = span;
+    }
+
+    return found;
+  }
+
+  function populateFromText(text){
+    const labeled = extractFieldsByPosition(text);
+    const hasAnyLabel = LABEL_TOKENS.some(tok => tok.re.test(text));
+
+    const rawLines = text.split('\n').map(l=>l.trim()).filter(Boolean);
+
+    const dividerIdx = rawLines.findIndex(isDividerLine);
+    let splitIndex, bottomStart;
+    if(dividerIdx !== -1){
+      // A real divider line was found — skip it, it's not content.
+      splitIndex = dividerIdx;
+      bottomStart = dividerIdx + 1;
+    } else {
+      // No real divider — just guessing a halfway point, so don't discard
+      // whichever line happens to sit at that index.
+      splitIndex = Math.floor(rawLines.length / 2);
+      bottomStart = splitIndex;
+    }
+    const topLines = rawLines.slice(0, splitIndex);
+    const bottomLines = rawLines.slice(bottomStart).length ? rawLines.slice(bottomStart) : rawLines.slice(splitIndex);
+    const topText = topLines.join('\n');
+
+    const emailMatch = topText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/) || text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+    const phoneMatch = topText.match(/(\+?\d[\d\s().-]{7,}\d)/) || text.match(/(\+?\d[\d\s().-]{7,}\d)/);
+
+    const isLabelLine = (line) => LABEL_TOKENS.some(tok => tok.re.test(line));
+
+    let fallbackName = '';
+    let fallbackProduct = '';
+    if(!hasAnyLabel){
+      for(const line of topLines){
+        const isEmailLine = emailMatch && line.includes(emailMatch[0]);
+        const isPhoneLine = phoneMatch && line.includes(phoneMatch[0]);
+        if(isEmailLine || isPhoneLine) continue;
+        if(isLabelLine(line)) continue;
+        fallbackName = line;
+        break;
+      }
+      fallbackProduct = bottomLines
+        .filter(l => !isLabelLine(l))
+        .filter(l => !(emailMatch && l.includes(emailMatch[0])))
+        .filter(l => !(phoneMatch && l.includes(phoneMatch[0])))
+        .join(' ').replace(/\s+/g,' ').trim();
+    }
+
+    // Some forms get read by OCR with all printed labels grouped together first,
+    // then all handwritten answers grouped together afterward (a column-order mixup),
+    // which leaves the position-based matching above with no value for Name even
+    // though it's clearly written on the page. When that happens on an otherwise
+    // recognized form, fall back to the first leftover line that isn't a label,
+    // isn't known form boilerplate, and isn't the phone/email we already found.
+    const FORM_BOILERPLATE = [
+      /\borms\b/i, /everything\s*photog/i, /client\s*information\s*form/i,
+      /^collection$/i, /delivery\s*\/?\s*courier/i
+    ];
+    if(hasAnyLabel && !labeled.name){
+      const candidate = rawLines.find(l =>
+        !isLabelLine(l) &&
+        !FORM_BOILERPLATE.some(p => p.test(l)) &&
+        !(emailMatch && l.includes(emailMatch[0])) &&
+        !(phoneMatch && l.includes(phoneMatch[0]))
+      );
+      if(candidate) labeled.name = candidate;
+    }
+
+    const emailRe = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+    ['name','phone','product'].forEach(f => {
+      if(labeled[f]){
+        const m = labeled[f].match(emailRe);
+        if(m) labeled[f] = labeled[f].replace(m[0], '').replace(/\s+/g,' ').trim();
+      }
+    });
+
+    fName.value = labeled.name || fallbackName || fName.value;
+    fPhone.value = labeled.phone || (phoneMatch ? phoneMatch[0].replace(/\s+/g,' ').trim() : '') || fPhone.value;
+    fEmail.value = labeled.email || (emailMatch ? emailMatch[0] : '') || fEmail.value;
+    const productText = labeled.product || fallbackProduct;
+    if(productText) setProductValues([productText]);
+  }
+
+  // ---------------- Init ----------------
+  refreshKeyStatus();
+
+  (async function init(){
+    try{
+      await refreshAll();
+      $('loginBtn').disabled = false;
+      $('loginBtn').textContent = 'Sign in';
+
+      const existingSession = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if(existingSession && existingSession.name){
+        showApp(existingSession.name);
+      }
+    }catch(err){
+      console.error('Startup load failed:', err);
+      showConnectionError('Could not connect to the server — check your internet connection and reload.');
+      $('loginBtn').textContent = 'Retry';
+      $('loginBtn').disabled = false;
+    }
+
+    // Keep every device in sync: refresh whenever any device changes data.
+    sb.channel('enquiries-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'enquiries' }, () => {
+        loadEntries().then(() => { renderList(); checkFollowups(); });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, () => {
+        loadSettings().then(() => {
+          populateStaffSelect(loginName, currentUser);
+          populateStaffSelect(fCapturedBy, currentUser);
+        });
+      })
+      .subscribe();
+  })();
+
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
