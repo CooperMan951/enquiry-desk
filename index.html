@@ -335,6 +335,24 @@
       <a href="#" id="authToggleLink" style="color:var(--accent); font-weight:600;">Create an account</a>
     </p>
   </div>
+
+  <div class="login-card" id="inviteSetupCard" style="display:none; margin-top:16px;">
+    <p class="brand-sub" style="margin-top:0;">You've been invited to Enquiry Desk — set up your account to continue.</p>
+    <div class="field">
+      <label for="inviteName">Your name</label>
+      <input type="text" id="inviteName" placeholder="e.g. Brendan" />
+    </div>
+    <div class="field">
+      <label for="invitePassword">Choose a password</label>
+      <input type="password" id="invitePassword" placeholder="••••••••" autocomplete="new-password" />
+    </div>
+    <div class="field">
+      <label for="invitePasswordConfirm">Confirm password</label>
+      <input type="password" id="invitePasswordConfirm" placeholder="••••••••" autocomplete="new-password" />
+    </div>
+    <p class="login-error" id="inviteError"></p>
+    <button type="button" class="btn btn-primary" id="inviteSetupBtn">Finish setting up my account</button>
+  </div>
 </div>
 
 <!-- ============ MAIN APP ============ -->
@@ -484,6 +502,11 @@
 (function(){
   const SUPABASE_URL = 'https://ihgbbwcrqjnjmxeatyrm.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImloZ2Jid2NycWpuam14ZWF0eXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MjU2ODksImV4cCI6MjA5ODAwMTY4OX0.urQ_kE4oYyz64eI6lKj_4wGrYyQVjM17DkQcnrgFPOg';
+  // Capture this before the Supabase client processes the URL hash (it clears it),
+  // so we can tell whether someone arrived via an invite link and needs to set
+  // up a password, vs a normal restored session.
+  const initialAuthFlowType = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('type');
+
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // Public key for push notifications — safe to expose client-side (the matching
@@ -723,6 +746,40 @@
     loginError.textContent = '';
     appShell.style.display = 'none';
     loginScreen.style.display = 'flex';
+    loginScreen.querySelector('.login-card').style.display = 'block';
+    $('inviteSetupCard').style.display = 'none';
+  });
+
+  $('inviteSetupBtn').addEventListener('click', async () => {
+    const name = $('inviteName').value.trim();
+    const pw = $('invitePassword').value;
+    const pwConfirm = $('invitePasswordConfirm').value;
+    const err = $('inviteError');
+    err.textContent = '';
+
+    if(!name){ err.textContent = 'Please enter your name.'; return; }
+    if(pw.length < 6){ err.textContent = 'Password must be at least 6 characters.'; return; }
+    if(pw !== pwConfirm){ err.textContent = 'Passwords do not match.'; return; }
+
+    const btn = $('inviteSetupBtn');
+    btn.disabled = true;
+    btn.textContent = 'Setting up…';
+
+    const { data: userData, error: pwError } = await sb.auth.updateUser({ password: pw });
+    if(pwError){
+      err.textContent = pwError.message;
+      btn.disabled = false; btn.textContent = 'Finish setting up my account';
+      return;
+    }
+
+    const { error: profileError } = await sb.from('profiles').insert({ id: userData.user.id, display_name: name });
+    if(profileError){
+      console.error('Could not create profile:', profileError);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Finish setting up my account';
+    showApp(name, false);
   });
 
   // ---------------- Team settings ----------------
@@ -1384,9 +1441,21 @@
       // automatically — this is what makes "stay signed in until logout" work.
       const { data: { session } } = await sb.auth.getSession();
       if(session && session.user){
-        const profile = await ensureProfile(session.user, '');
-        currentUserId = session.user.id;
-        showApp(profile ? profile.display_name : session.user.email, profile ? profile.is_admin : false);
+        const profile = await loadProfile(session.user.id);
+        if(profile){
+          currentUserId = session.user.id;
+          showApp(profile.display_name, profile.is_admin);
+        } else if(initialAuthFlowType === 'invite'){
+          // Arrived via an invite link with no profile yet — they need to choose
+          // a name and a real password before they can use the app.
+          currentUserId = session.user.id;
+          loginScreen.querySelector('.login-card').style.display = 'none';
+          $('inviteSetupCard').style.display = 'block';
+        } else {
+          const created = await ensureProfile(session.user, '');
+          currentUserId = session.user.id;
+          showApp(created ? created.display_name : session.user.email, created ? created.is_admin : false);
+        }
       }
     }catch(err){
       console.error('Startup load failed:', err);
