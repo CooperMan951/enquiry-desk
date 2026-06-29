@@ -468,6 +468,11 @@
       <div id="listWrap"></div>
     </div>
 
+    <details class="card" id="finalisedCard">
+      <summary>Finalised enquiries (<span id="finalisedCountLabel">0</span>)</summary>
+      <div id="finalisedWrap" style="margin-top:14px;"></div>
+    </details>
+
     <p class="footnote">
       Enquiry data, the staff list, and the team PIN sync live across every device through a shared database.<br/>
       The OCR scanning key (Team settings) stays local to each device only and isn't shared.
@@ -865,60 +870,42 @@
     }catch(e){ /* ignore — notification not critical to core function */ }
   }
 
-  function renderList(){
-    const filterMode = $('listFilter') ? $('listFilter').value : 'mine';
-    // Pair each entry with its real index in the `entries` array before filtering,
-    // so delete/toggle actions still target the correct underlying entry.
-    const indexed = entries.map((e, i) => ({ e, i }));
-    const visible = filterMode === 'mine'
-      ? indexed.filter(x => (x.e.capturedBy || '') === currentUser)
-      : indexed;
+  const STATUS_FIELDS = [
+    { key: 'assisted', label: 'Assisted' },
+    { key: 'ordered', label: 'Ordered' },
+    { key: 'clientNotified', label: 'Client notified' },
+    { key: 'clientCollected', label: 'Client collected' }
+  ];
 
-    $('countLabel').textContent = visible.length;
-    const wrap = $('listWrap');
-    if(visible.length === 0){
-      wrap.innerHTML = '<p class="empty-state">' +
-        (filterMode === 'mine' && entries.length > 0
-          ? 'No enquiries captured by you yet. Switch to "All enquiries" to see the full team list.'
-          : 'No enquiries saved yet.') +
-        '</p>';
-      return;
-    }
-    let html = '';
-    const STATUS_FIELDS = [
-      { key: 'assisted', label: 'Assisted' },
-      { key: 'ordered', label: 'Ordered' },
-      { key: 'clientNotified', label: 'Client notified' },
-      { key: 'clientCollected', label: 'Client collected' }
-    ];
-    visible.slice().reverse().forEach(({ e, i: realIdx }) => {
-      const followupBadge = e.followUp ? buildFollowupBadge(e.followUp) : '';
-      const statusChecklist = STATUS_FIELDS.map(f =>
-        '<label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); white-space:nowrap;">' +
-        '<input type="checkbox" data-status="'+realIdx+'" data-key="'+f.key+'" '+(e[f.key]?'checked':'')+' style="width:14px; height:14px; accent-color:var(--success);" />' +
-        f.label + '</label>'
-      ).join('');
-      const thumb = e.photo
-        ? '<img src="'+e.photo+'" data-photo-view="'+realIdx+'" alt="Scanned note thumbnail" style="width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--line); cursor:pointer; flex-shrink:0;" />'
-        : '';
-      html += '<div class="entry-row">' +
-        '<div class="entry-left">' +
-        thumb +
-        '<div>' +
-        '<p class="entry-name">' + escapeHtml(e.name || '(no name)') + '</p>' +
-        '<p class="entry-contact">' + escapeHtml(e.phone||'') + (e.phone && e.email ? ' · ' : '') + escapeHtml(e.email||'') + '</p>' +
-        '<p class="entry-product">' + escapeHtml(productDisplay(e.product)) + '</p>' +
-        '<p class="entry-meta">' + escapeHtml(e.date||'') + (e.capturedBy ? ' · ' + escapeHtml(e.capturedBy) : '') + '</p>' +
-        (followupBadge ? '<p style="margin:6px 0 0;">' + followupBadge + '</p>' : '') +
-        '</div></div>' +
-        '<div class="entry-right" style="align-items:flex-end;">' +
-        '<div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">' + statusChecklist + '</div>' +
-        '<div style="display:flex; gap:6px; margin-top:4px;">' +
-        '<button type="button" class="btn btn-ghost" data-edit="'+realIdx+'" style="padding:5px 9px; font-size:13px;">Edit</button>' +
-        '<button type="button" class="del-btn" data-del="'+realIdx+'">Delete</button>' +
-        '</div></div></div>';
-    });
-    wrap.innerHTML = html;
+  function buildEntryRowHtml(e, realIdx){
+    const followupBadge = e.followUp ? buildFollowupBadge(e.followUp) : '';
+    const statusChecklist = STATUS_FIELDS.map(f =>
+      '<label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); white-space:nowrap;">' +
+      '<input type="checkbox" data-status="'+realIdx+'" data-key="'+f.key+'" '+(e[f.key]?'checked':'')+' style="width:14px; height:14px; accent-color:var(--success);" />' +
+      f.label + '</label>'
+    ).join('');
+    const thumb = e.photo
+      ? '<img src="'+e.photo+'" data-photo-view="'+realIdx+'" alt="Scanned note thumbnail" style="width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--line); cursor:pointer; flex-shrink:0;" />'
+      : '';
+    return '<div class="entry-row">' +
+      '<div class="entry-left">' +
+      thumb +
+      '<div>' +
+      '<p class="entry-name">' + escapeHtml(e.name || '(no name)') + '</p>' +
+      '<p class="entry-contact">' + escapeHtml(e.phone||'') + (e.phone && e.email ? ' · ' : '') + escapeHtml(e.email||'') + '</p>' +
+      '<p class="entry-product">' + escapeHtml(productDisplay(e.product)) + '</p>' +
+      '<p class="entry-meta">' + escapeHtml(e.date||'') + (e.capturedBy ? ' · ' + escapeHtml(e.capturedBy) : '') + '</p>' +
+      (followupBadge ? '<p style="margin:6px 0 0;">' + followupBadge + '</p>' : '') +
+      '</div></div>' +
+      '<div class="entry-right" style="align-items:flex-end;">' +
+      '<div style="display:flex; flex-direction:column; gap:5px; align-items:flex-end;">' + statusChecklist + '</div>' +
+      '<div style="display:flex; gap:6px; margin-top:4px;">' +
+      '<button type="button" class="btn btn-ghost" data-edit="'+realIdx+'" style="padding:5px 9px; font-size:13px;">Edit</button>' +
+      '<button type="button" class="del-btn" data-del="'+realIdx+'">Delete</button>' +
+      '</div></div></div>';
+  }
+
+  function bindEntryRowEvents(wrap){
     wrap.querySelectorAll('[data-del]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const i = parseInt(btn.getAttribute('data-del'));
@@ -955,6 +942,43 @@
         openPhotoViewer(entries[i].photo);
       });
     });
+  }
+
+  function renderList(){
+    const filterMode = $('listFilter') ? $('listFilter').value : 'mine';
+    // Pair each entry with its real index in the `entries` array before filtering,
+    // so delete/toggle actions still target the correct underlying entry.
+    const indexed = entries.map((e, i) => ({ e, i }));
+    const visible = filterMode === 'mine'
+      ? indexed.filter(x => (x.e.capturedBy || '') === currentUser)
+      : indexed;
+
+    // Assisted enquiries are considered finalised — done and out of the way,
+    // shown in their own collapsed section instead of cluttering the main list.
+    const active = visible.filter(x => !x.e.assisted);
+    const finalised = visible.filter(x => x.e.assisted);
+
+    $('countLabel').textContent = active.length;
+    const wrap = $('listWrap');
+    if(active.length === 0){
+      wrap.innerHTML = '<p class="empty-state">' +
+        (filterMode === 'mine' && entries.length > 0
+          ? 'No open enquiries captured by you. Switch to "All enquiries" to see the full team list.'
+          : 'No open enquiries right now.') +
+        '</p>';
+    } else {
+      wrap.innerHTML = active.slice().reverse().map(({ e, i }) => buildEntryRowHtml(e, i)).join('');
+      bindEntryRowEvents(wrap);
+    }
+
+    $('finalisedCountLabel').textContent = finalised.length;
+    const finalisedWrap = $('finalisedWrap');
+    if(finalised.length === 0){
+      finalisedWrap.innerHTML = '<p class="empty-state">No finalised enquiries yet.</p>';
+    } else {
+      finalisedWrap.innerHTML = finalised.slice().reverse().map(({ e, i }) => buildEntryRowHtml(e, i)).join('');
+      bindEntryRowEvents(finalisedWrap);
+    }
   }
 
   function loadEntryIntoForm(i){
