@@ -17,8 +17,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Network-first: always try to get the latest version online. Only fall back
-// to the cached copy if there's no connection (so updates show up immediately
-// instead of anyone getting stuck on an old cached version).
+// to the cached copy if there's no connection.
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
@@ -28,5 +27,32 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => caches.match(event.request))
+  );
+});
+
+// Show a real notification when a push arrives — this is what allows reminders
+// to reach someone even while the app isn't open.
+self.addEventListener('push', (event) => {
+  let data = { title: 'Enquiry Desk', body: 'You have a reminder.' };
+  try{ if(event.data) data = event.data.json(); }catch(e){
+    if(event.data) data.body = event.data.text();
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Enquiry Desk', {
+      body: data.body || '',
+      icon: 'icon-192.png',
+      badge: 'icon-192.png'
+    })
+  );
+});
+
+// Bring the app to the front when the notification is tapped.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window' }).then((clientsArr) => {
+      if(clientsArr.length > 0){ clientsArr[0].focus(); }
+      else { self.clients.openWindow('./'); }
+    })
   );
 });

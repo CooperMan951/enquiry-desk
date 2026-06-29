@@ -490,6 +490,47 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImloZ2Jid2NycWpuam14ZWF0eXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MjU2ODksImV4cCI6MjA5ODAwMTY4OX0.urQ_kE4oYyz64eI6lKj_4wGrYyQVjM17DkQcnrgFPOg';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // Public key for push notifications — safe to expose client-side (the matching
+  // private key stays server-side only, inside the Supabase Edge Function).
+  const VAPID_PUBLIC_KEY = 'BHeHg0Z-CZcyUcgV9o3IbjZoSn1kRYz3i6b12HnuXQt5CWscjUYlCUsyW6yEW9ORreaXjgqil8P1ZDn-wknsZ2c';
+
+  function urlBase64ToUint8Array(base64String){
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for(let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+  }
+
+  async function subscribeToPush(name){
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try{
+      if(Notification.permission === 'default'){
+        await Notification.requestPermission();
+      }
+      if(Notification.permission !== 'granted') return;
+
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if(!sub){
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      }
+      const subJson = sub.toJSON();
+      await sb.from('push_subscriptions').upsert({
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth,
+        captured_by: name
+      });
+    }catch(err){
+      console.error('Push subscription failed:', err);
+    }
+  }
+
   // visionApiKey is now a shared team setting (synced via Supabase) rather than
   // something each device has to enter separately.
   const SESSION_KEY = 'session_local_v1';
@@ -618,6 +659,7 @@
     $('teamSettingsCard').style.display = ADMIN_USERS.includes(name) ? '' : 'none';
     renderList();
     checkFollowups();
+    subscribeToPush(name);
   }
 
   $('loginBtn').addEventListener('click', () => {
