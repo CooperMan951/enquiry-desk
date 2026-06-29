@@ -372,7 +372,7 @@
         </div>
 
         <p class="field-label">Google Cloud Vision API key</p>
-        <p class="hint" style="margin-top:0;">Stored only in this browser. Get a free key at console.cloud.google.com → enable "Cloud Vision API" → Credentials → Create API key.</p>
+        <p class="hint" style="margin-top:0;">Shared with every signed-in device once saved — you only need to set this once for the whole team. Get a free key at console.cloud.google.com → enable "Cloud Vision API" → Credentials → Create API key.</p>
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
           <input type="password" id="apiKeyInput" style="flex:1; min-width:220px;" placeholder="Paste your Google Cloud Vision API key" />
           <button type="button" class="btn btn-secondary" id="saveKeyBtn">Save key</button>
@@ -490,7 +490,8 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImloZ2Jid2NycWpuam14ZWF0eXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MjU2ODksImV4cCI6MjA5ODAwMTY4OX0.urQ_kE4oYyz64eI6lKj_4wGrYyQVjM17DkQcnrgFPOg';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const APIKEY_KEY = 'vision_api_key_local_v1';
+  // visionApiKey is now a shared team setting (synced via Supabase) rather than
+  // something each device has to enter separately.
   const SESSION_KEY = 'session_local_v1';
   const DEFAULT_PIN = '0020';
   const DEFAULT_STAFF = ['Arno', 'Brendan', 'Gavin', 'Marcel', 'Phiwe', 'Faizel', 'Japie'];
@@ -500,7 +501,7 @@
   let entries = [];
   let staff = [];
   let teamPin = DEFAULT_PIN;
-  let visionApiKey = localStorage.getItem(APIKEY_KEY) || '';
+  let visionApiKey = '';
   let currentUser = '';
   let editingIndex = -1;
 
@@ -554,6 +555,7 @@
     (data || []).forEach(row => { map[row.key] = row.value; });
     teamPin = map.team_pin || DEFAULT_PIN;
     staff = Array.isArray(map.staff_list) && map.staff_list.length ? map.staff_list : DEFAULT_STAFF.slice();
+    visionApiKey = map.vision_api_key || '';
   }
 
   async function refreshAll(){
@@ -664,22 +666,28 @@
   function refreshKeyStatus(){
     if(visionApiKey){
       apiKeyInput.value = visionApiKey;
-      keyStatus.textContent = 'Key saved in this browser.';
+      keyStatus.textContent = 'Key saved — shared with every signed-in device.';
       keyStatus.style.color = 'var(--success)';
     } else {
       keyStatus.textContent = 'No key saved yet — photo scanning will not work until one is added.';
       keyStatus.style.color = 'var(--ink-faint)';
     }
   }
-  $('saveKeyBtn').addEventListener('click', () => {
+  $('saveKeyBtn').addEventListener('click', async () => {
     const val = apiKeyInput.value.trim();
     if(!val){
       keyStatus.textContent = 'Please paste a key first.';
       keyStatus.style.color = 'var(--warning)';
       return;
     }
+    const { error } = await sb.from('app_settings').upsert({ key: 'vision_api_key', value: val });
+    if(error){
+      keyStatus.textContent = 'Could not save — check your connection and try again.';
+      keyStatus.style.color = 'var(--danger)';
+      console.error(error);
+      return;
+    }
     visionApiKey = val;
-    localStorage.setItem(APIKEY_KEY, val);
     refreshKeyStatus();
   });
 
@@ -1192,6 +1200,21 @@
     const labeled = extractFieldsByPosition(text);
     const hasAnyLabel = LABEL_TOKENS.some(tok => tok.re.test(text));
 
+    // The Email field sometimes ends up capturing the phone number too, when
+    // OCR groups both handwritten answers together with no real boundary
+    // between them. Pull out just the actual email address, and rescue the
+    // phone number from inside that span if the Phone field came up empty.
+    if(labeled.email){
+      const emailOnly = labeled.email.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if(emailOnly){
+        if(!labeled.phone){
+          const phoneInside = labeled.email.match(/(\+?\d[\d\s().-]{7,}\d)/);
+          if(phoneInside) labeled.phone = phoneInside[0].replace(/\s+/g,' ').trim();
+        }
+        labeled.email = emailOnly[0];
+      }
+    }
+
     const rawLines = text.split('\n').map(l=>l.trim()).filter(Boolean);
 
     const dividerIdx = rawLines.findIndex(isDividerLine);
@@ -1269,11 +1292,10 @@
   }
 
   // ---------------- Init ----------------
-  refreshKeyStatus();
-
   (async function init(){
     try{
       await refreshAll();
+      refreshKeyStatus();
       $('loginBtn').disabled = false;
       $('loginBtn').textContent = 'Sign in';
 
@@ -1297,6 +1319,7 @@
         loadSettings().then(() => {
           populateStaffSelect(loginName, currentUser);
           populateStaffSelect(fCapturedBy, currentUser);
+          refreshKeyStatus();
         });
       })
       .subscribe();
