@@ -626,6 +626,22 @@
     return data;
   }
 
+  // Creates the profile row if it doesn't exist yet. This only works correctly
+  // once there's a real authenticated session (not right after signUp() if email
+  // confirmation is still pending) — RLS requires auth.uid() to match the row
+  // being inserted, which isn't true until the user is actually logged in.
+  async function ensureProfile(user, fallbackName){
+    let profile = await loadProfile(user.id);
+    if(profile) return profile;
+    const displayName = (user.user_metadata && user.user_metadata.display_name) || fallbackName || user.email;
+    const { error } = await sb.from('profiles').insert({ id: user.id, display_name: displayName });
+    if(error){
+      console.error('Could not create profile:', error);
+      return { id: user.id, display_name: displayName, is_admin: false };
+    }
+    return await loadProfile(user.id);
+  }
+
   function showApp(displayName, admin){
     currentUser = displayName;
     isAdmin = !!admin;
@@ -658,14 +674,16 @@
     btn.textContent = isSignupMode ? 'Creating account…' : 'Signing in…';
 
     if(isSignupMode){
-      const { data, error } = await sb.auth.signUp({ email, password });
+      // Store the chosen name in the account itself, so it's available later
+      // even if the profile row can't be created until after email confirmation.
+      const { data, error } = await sb.auth.signUp({
+        email, password,
+        options: { data: { display_name: name } }
+      });
       if(error){
         loginError.textContent = error.message;
         btn.disabled = false; btn.textContent = 'Create account';
         return;
-      }
-      if(data.user){
-        await sb.from('profiles').insert({ id: data.user.id, display_name: name });
       }
       if(!data.session){
         loginError.textContent = 'Account created — check your email to confirm, then sign in.';
@@ -673,7 +691,8 @@
         btn.disabled = false; btn.textContent = 'Sign in';
         return;
       }
-      const profile = await loadProfile(data.user.id);
+      // A session exists immediately (email confirmation is off) — safe to create the profile now.
+      const profile = await ensureProfile(data.user, name);
       currentUserId = data.user.id;
       showApp(profile ? profile.display_name : name, profile ? profile.is_admin : false);
     } else {
@@ -683,7 +702,8 @@
         btn.disabled = false; btn.textContent = 'Sign in';
         return;
       }
-      const profile = await loadProfile(data.user.id);
+      // First sign-in after confirming email — create the profile now if it's missing.
+      const profile = await ensureProfile(data.user, '');
       currentUserId = data.user.id;
       showApp(profile ? profile.display_name : email, profile ? profile.is_admin : false);
     }
@@ -1340,7 +1360,7 @@
       // automatically — this is what makes "stay signed in until logout" work.
       const { data: { session } } = await sb.auth.getSession();
       if(session && session.user){
-        const profile = await loadProfile(session.user.id);
+        const profile = await ensureProfile(session.user, '');
         currentUserId = session.user.id;
         showApp(profile ? profile.display_name : session.user.email, profile ? profile.is_admin : false);
       }
